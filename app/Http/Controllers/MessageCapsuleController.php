@@ -13,7 +13,7 @@ class MessageCapsuleController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json(MessageCapsule::all(), 200);
     }
 
     /**
@@ -22,6 +22,15 @@ class MessageCapsuleController extends Controller
     public function create()
     {
         //
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function open(MessageCapsule $messageCapsule)
+    {
+        $messageCapsule->update(['is_opened' => 'true']);
+        return response()->json($messageCapsule, 201);
     }
 
     /**
