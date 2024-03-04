@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon;
 
 class MessageCapsule extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'message',
+        'note',
         'scheduled_opening_time',
         'is_opened',
         'user_id',
@@ -30,5 +31,15 @@ class MessageCapsule extends Model
     public static function getAllUnopened()
     {
         return self::where('is_opened', false)->get();
+    }
+
+    public function canBeOpened(): bool
+    {
+        return empty($this->is_opened) && $this->openingTimePassed();
+    }
+
+    public function openingTimePassed(): bool
+    {
+        return Carbon::now()->gte(Carbon::parse($this->scheduled_opening_time));
     }
 }

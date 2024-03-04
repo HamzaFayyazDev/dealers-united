@@ -2,79 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreMessageCapsuleRequest;
-use App\Http\Requests\UpdateMessageCapsuleRequest;
-use App\Models\MessageCapsule;
+use App\Http\Requests\{StoreMessageCapsuleRequest, OpenMessageCapsuleRequest};
+use App\Http\Resources\MessageCapsuleResource;
+use App\Models\{MessageCapsule, User};
+use Illuminate\Http\Response;
 
 class MessageCapsuleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct()
     {
-        return response()->json(MessageCapsule::all(), 200);
+        $this->authorizeResource(MessageCapsule::class, 'message_capsule', ['except' => ['store', 'index']]);    }
+
+    public function index(User $user)
+    {
+        return MessageCapsuleResource::collection($user->messageCapsules);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(User $user, MessageCapsule $messageCapsule)
     {
-        //
+        return new MessageCapsuleResource($messageCapsule);
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function open(MessageCapsule $messageCapsule)
-    {
-        $messageCapsule->update(['is_opened' => 'true']);
-        return response()->json($messageCapsule, 201);
-    }
-
+    
     /**
      * Store a newly created message capsule in storage.
      *
+     * @param  \App\Models\User  $user
      * @param  \App\Http\Requests\StoreMessageCapsuleRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreMessageCapsuleRequest $request)
+    public function store(User $user, StoreMessageCapsuleRequest $request)
     {
-        $messageCapsule = MessageCapsule::create($request->validated());
+        $messageCapsule = $user->messageCapsules()->create($request->validated());
 
-        return response()->json($messageCapsule, 201);
+        if ($messageCapsule->wasRecentlyCreated) {
+            return response()->json($messageCapsule, Response::HTTP_CREATED);
+        } else {
+            return response()->json(['error' => 'Failed to create message capsule', 'errors' => $messageCapsule->getErrors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(MessageCapsule $messageCapsule)
+    public function open(User $user, MessageCapsule $messageCapsule)
     {
-        //
-    }
+        $this->authorize('open', [MessageCapsule::class, $messageCapsule, $user]);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(MessageCapsule $messageCapsule)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateMessageCapsuleRequest $request, MessageCapsule $messageCapsule)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(MessageCapsule $messageCapsule)
-    {
-        //
+        $messageCapsule->fill((['is_opened' => true]));
+        if ($messageCapsule->save()) {
+            return response()->json( new MessageCapsuleResource($messageCapsule), Response::HTTP_OK);
+        } else {
+            return response()->json(['error' => $object->getErrors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }        
     }
 }

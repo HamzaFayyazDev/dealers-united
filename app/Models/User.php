@@ -44,8 +44,8 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function messagesCapsules(): HasMany
+    public function messageCapsules(): HasMany
     {
-        return $this->hasMany(MessagesCapsule::class);
+        return $this->hasMany(MessageCapsule::class);
     }
 }

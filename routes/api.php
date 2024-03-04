@@ -19,8 +19,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
-Route::get('/message-capsules', [MessageCapsuleController::class, 'index']);
-Route::post('/message-capsules', [MessageCapsuleController::class, 'store']);
-Route::put('/message-capsules/{messageCapsule}', [MessageCapsuleController::class, 'update']);
-Route::put('/message-capsules/{messageCapsule}', [MessageCapsuleController::class, 'open']);
+Route::middleware(['auth:sanctum', 'request.user.authenticated'])->group( function () {
+    Route::resource('users.message-capsules', MessageCapsuleController::class)->only([
+        'index', 'show', 'store'
+    ]);
+    Route::put('/users/{user}/message-capsules/{messageCapsule}/open', [MessageCapsuleController::class, 'open']);
+});
